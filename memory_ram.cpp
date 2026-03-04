@@ -34,12 +34,18 @@ int main() {
         if(input == "Exit") break;
 
         stringstream ss(input);
-        string command, key, value;
-        ss >> command >> key >> value;
+        string command;
+        ss >> command;
         if(command == "set"){
+            string key,value;
+            ss >> key >> value;
             db.set(key,value);
         }
-        else if(command == "get"){cout << db.get(key) << endl;}
+        else if(command == "get"){
+            string key;
+            ss >> key;
+            cout << db.get(key) << endl;
+        }
         else {cout << "(Error) unknown command: "<< command << endl;}
     }
     return 0;
