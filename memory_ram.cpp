@@ -1,7 +1,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
-
+#include <sstream>
+//string stream takes an input line and splits into parts based on whitespace
 using namespace std;
 
 class MiniDB {
@@ -22,15 +23,24 @@ class MiniDB {
 };
 
 int main() {
+    // adding a cli so it can be interactive but doesnt have a permanent meory yet
     MiniDB db;
-    cout << "--- MINIDB starting ---- \n";
-    db.set("Username","Ninja123");
-    db.set("weapon","swordy");
-    //armor is not set but will be set
-    cout << "\n --- Fetching Data ---" << endl;
-    cout << "WHo is the user? " << db.get("Username") << endl;
-    cout << "What is the weapon?" << db.get("weapon") << endl;
-    cout << "What is their armor?" << db.get("Armor") << endl;
-    cout << "--- I told you armor is not decided yet ----" << endl;
+    string input;
+
+    cout << "Welcome to MiniDB! (Type 'Exit' to quit)" << endl;
+    while(true) {
+        cout << "db > ";
+        getline(cin, input);
+        if(input == "Exit") break;
+
+        stringstream ss(input);
+        string command, key, value;
+        ss >> command >> key >> value;
+        if(command == "set"){
+            db.set(key,value);
+        }
+        else if(command == "get"){cout << db.get(key) << endl;}
+        else {cout << "(Error) unknown command: "<< command << endl;}
+    }
     return 0;
 } 
