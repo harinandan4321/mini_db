@@ -1,75 +1,130 @@
 #include <iostream>
-#include <unordered_map>
+#include <fstream>
 #include <string>
-#include <sstream> //string stream takes an input line and splits into parts based on whitespace
-#include <fstream> //contains both input aqnd output files
+#include <unordered_map>
+#include <sstream>
 
 using namespace std;
 
 class MiniDB {
-    private:
-    unordered_map<string,string> store;
-    void load () {
-    ifstream infile("data.txt");
-    if(!infile) return;
-    string key,value;
-    while(infile >> key >> value){store[key]=value;}
-    infile.close();
-    cout << "system databse is loaded. " << store.size() << "keys loaded." << endl;
-}
+private:
+    unordered_map<string, string> store;
 
-    public:
-    MiniDB () {
+    string trim(const string& s) {
+        size_t first = s.find_first_not_of(" \t\n");
+        if (first == string::npos) return "";
+        size_t last = s.find_last_not_of(" \t\n");
+        return s.substr(first, (last - first + 1));
+    }
+    void load() {
+        ifstream infile("data.txt");
+        string line;
+        if (!infile.is_open()) return;
+
+        while (getline(infile, line)) {
+            if (line.empty() || line.find_first_not_of(" \t\r\n") == string::npos) continue;
+
+            size_t commaPos = line.find(',');
+            if (commaPos == string::npos) continue; 
+
+            string k = trim(line.substr(0, commaPos));
+            string v = trim(line.substr(commaPos + 1));
+
+            if (!k.empty()) {
+                if(!v.empty()){
+                    store[k]=v;
+                }
+            }
+        }
+        infile.close();
+    }
+
+public:
+    MiniDB(){
         load();
     }
-    void set(string key,string value){
-        store[key]=value;
-        ofstream outfile("data.txt", ios::app);
-        if(outfile.is_open()) {
-            outfile << key << " " << value << endl;
-            outfile.close();
-            cout << "saved [" << key << "->" << value << "]" << endl;
+    void set(string k, string v) {
+        k = trim(k);
+        v = trim(v);
+        if (k.empty() || v.empty()) return;
+        store[k] = v;
+        ofstream infile("data.txt", ios::app);
+        if (infile.is_open()) {
+            infile << k << "," << v << endl;
+            infile.close();
         }
-        else {
-            cout << "Error Access denied!" << endl;
-        }
-        
     }
-    string get(string key){
-        if(store.count(key)) {
-            return store[key];
+
+    string get(string k) {
+        k = trim(k);
+        if (store.count(k)) {
+            return store[k];
         }
-        else {return "Error: key not found!";}
+        return "key [ " + k + " ] not found!";
+    }
+
+    void listAll() {
+        if (store.empty()) {
+            cout << "[System] Database is currently empty." << endl;
+            return;
+        }
+        cout << "--- Current Entries ---" << endl;
+        for (auto const& [key, val] : store) {
+            cout << "  " << key << " : " << val << endl;
+        }
+        cout << "-----------------------" << endl;
     }
 };
 
-
-
 int main() {
-    // adding a cli so it can be interactive but doesnt have a permanent meory yet
     MiniDB db;
-    string input;
 
-    cout << "Welcome to MiniDB! (Type 'Exit' to quit)" << endl;
-    while(true) {
-        cout << "db > ";
-        getline(cin, input);
-        if(input == "Exit") break;
+    cout << "MiniDB Started." << endl;
+    cout << "Commands: SET key,value | GET key | LIST | EXIT or Exit" << endl;
+
+    string input;
+    while (true) {
+        cout << "\ndb > ";
+        if (!getline(cin, input)) break;
 
         stringstream ss(input);
         string command;
-        ss >> command;
-        if(command == "set"){
-            string key,value;
-            ss >> key >> value;
-            db.set(key,value);
+        ss >> command; 
+
+        if (command == "set") {
+            string pair;
+            getline(ss >> ws, pair); 
+
+            size_t commaPos = pair.find(',');
+            if (commaPos == string::npos) {
+                cout << "[Error] Missing comma! Correct usage: SET name,Arjit" << endl;
+            } else {
+                string k = pair.substr(0, commaPos);
+                string v = pair.substr(commaPos + 1);
+                db.set(k, v);
+                cout << "[Success] Entry stored." << endl;
+            }
+        } 
+        else if (command == "get") {
+            string k;
+            getline(ss >> ws, k);
+            if (k.empty()) {
+                cout << "[Error] Usage: GET keyname" << endl;
+            } else {
+                cout << "Result: " << db.get(k) << endl;
+            }
+        } 
+        else if (command == "list") {
+            db.listAll();
+        } 
+        else if (command == "EXIT" || "Exit") {
+            cout << "Goodbye!" << endl;
+            break;
+        } 
+        else {
+            cout << "[Error] Unknown command. Try set, get, or list." << endl;
         }
-        else if(command == "get"){
-            string key;
-            ss >> key;
-            cout << db.get(key) << endl;
-        }
-        else {cout << "(Error) unknown command: "<< command << endl;}
     }
+
     return 0;
-} 
+}
