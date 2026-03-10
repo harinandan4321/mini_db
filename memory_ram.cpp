@@ -29,13 +29,14 @@ private:
 
             string k = trim(line.substr(0, commaPos));
             string v = trim(line.substr(commaPos + 1));
-
+            if(v=="___deleted___"){store.erase(k);}
+            else { 
             if (!k.empty()) {
                 if(!v.empty()){
                     store[k]=v;
                 }
             }
-        }
+        } }
         infile.close();
     }
 
@@ -74,13 +75,22 @@ public:
         }
         cout << "-----------------------" << endl;
     }
+
+    void remove(string k){
+        k=trim(k);
+        if(store.count(k)) store.erase(k);
+        ofstream infile("data.txt",ios::app);
+        infile << k << ",___deleted___"<<endl;
+        infile.close();
+    }
+
 };
 
 int main() {
     MiniDB db;
 
     cout << "MiniDB Started." << endl;
-    cout << "Commands: SET key,value | GET key | LIST | EXIT or Exit" << endl;
+    cout << "Commands: set key,value or update key,value | get key | list | EXIT or Exit" << endl;
 
     string input;
     while (true) {
@@ -91,7 +101,7 @@ int main() {
         string command;
         ss >> command; 
 
-        if (command == "set") {
+        if (command == "set" || command =="update") {
             string pair;
             getline(ss >> ws, pair); 
 
@@ -114,6 +124,14 @@ int main() {
                 cout << "Result: " << db.get(k) << endl;
             }
         } 
+        else if (command == "delete") {
+            string k;
+            getline(ss >> ws,k);
+            if(k.empty()){cout << endl;}
+            else {
+                db.remove(k); cout << "key [ " << k << " ] is deleted" << endl;
+            }
+        }
         else if (command == "list") {
             db.listAll();
         } 
